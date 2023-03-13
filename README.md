@@ -16,15 +16,46 @@
 
 在 `TCP` 的 `3` 次握手之后，`GoCryptoTCP` 会额外做 `1` 次握手，互相交换 `RSA Public Key`，商定 `AES KEY` 并用公钥加密后交换。后续的消息可以自由选用 `RSA` 或 `AES`加密。
 
-`GoCryptoTCP` 向下封装 `TCP`的细节，向上提供发送数据流和报文的接口。
+`GoCryptoTCP` 向下封装 `TCP`的细节，向上提供发送数据流和报文的接口。支持类似websocket的长链接，两端都可以主动推送加密信息。
+
+![img](/pic/GoCryptoTCP实现机制.svg)
+
+### 消息设计
+```go
+var (
+	ApplyCrypto  = 1
+	AcceptCrypto = 2
+	RejectCrypto = 3
+	CryptoMsgRSA = 4
+	CryptoMsgAES = 5
+)
+
+type Msg struct {
+	MsgType   int    `json:"msgType"`
+	From      int    `json:"from"`
+	To        int    `json:"to"`
+	Body      []byte `json:"body,omitempty"`
+	RSAPubKey []byte `json:"RSAPubKey,omitempty"`
+	AESKey    []byte `json:"AESKey,omitempty"`
+	Sign      []byte `json:"sign,omitempty"`
+}
+
+```
+避免沾包方式：发送数据后添加`\n`。
 
 ### 项目演示
 
-![img](/clientEg/eg.png)
 
-为了演示项目，采用 `C/S` 架构搭建了公共通讯服务器。下载 `Releases` 中的 `client.public.exe`运行即可。
+为了演示项目，采用 `C/S` 架构搭建了公共通讯服务器。
+`ID Pool` 负责在加密建立时在o(1)内为 `Client` 分配临时的不重复 `ID` 。
+为了加大并发吞吐量，用 `Channel` 模拟简单的消息队列。
+设计如图：
 
-每次连接都会随机分配到一个 `ID`，这个 `ID` 由一个 `ID Pool`来管理，保证 `o(1)` 时间高效分发不重复。
+![img](/pic/加密聊天服务器.svg)
+
+下载 `Releases` 中的 `client.public.exe`运行即可。
+
+![img](/pic/eg.png)
 
 发送方法：
 
@@ -45,6 +76,14 @@ go build -o client.exe && client.exe
 在 `serverEg` 文件夹下执行：
 ```shell
 go build -o server.exe && server.exe
+```
+
+`Server` 端额外有一些口令：
+```shell 
+status - 查看链接数量
+show-conn - 查看所有链接情况，包含id、地址
+show-conn [id] - 查看某一id的链接情况
+to [id] - 向某一链接发送系统消息
 ```
 
 ### 未来计划
