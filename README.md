@@ -14,7 +14,7 @@
 
 ### 工作原理
 
-在 `TCP` 的 `3` 次握手之后，`GoCryptoTCP` 会额外做 `1` 次握手，互相交换 `RSA Public Key`，商定 `AES KEY` 并用公钥加密后交换。后续的消息可以自由选用 `RSA` 或 `AES`加密。
+在 `TCP` 的 `3` 次握手之后，`GoCryptoTCP` 会额外做 `2` 次握手，互相交换 `RSA Public Key`，商定 `AES KEY` 并用公钥加密后交换。后续的消息可以自由选用 `RSA` 或 `AES`加密。
 
 `GoCryptoTCP` 向下封装 `TCP`的细节，向上提供发送数据流和报文的接口。支持类似websocket的长链接，两端都可以主动推送加密信息。
 
